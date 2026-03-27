@@ -1,0 +1,301 @@
+" =============================================================================
+" General Settings
+" =============================================================================
+set nocompatible
+filetype plugin indent on
+syntax enable
+
+set encoding=utf-8
+set hidden                    " Allow switching buffers without saving
+set updatetime=300            " Faster completion / CursorHold events
+set timeoutlen=500
+set signcolumn=yes
+set number relativenumber     " Hybrid line numbers
+set cursorline
+set scrolloff=8               " Keep 8 lines visible above/below cursor
+set sidescrolloff=8
+set wrap linebreak
+set splitbelow splitright
+set clipboard=unnamedplus     " Use system clipboard
+set mouse=a
+
+" Indentation
+set tabstop=4 shiftwidth=4 expandtab
+set autoindent smartindent
+
+" Search
+set incsearch hlsearch ignorecase smartcase
+
+" Appearance
+set termguicolors
+set laststatus=2
+set showmatch
+set noshowmode                " Lightline shows mode already
+
+" Persistent undo
+set undofile
+set undodir=~/.vim/undodir
+
+" =============================================================================
+" vim-plug — Plugin Manager
+" Install: curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+"   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+" Then run :PlugInstall
+" =============================================================================
+call plug#begin('~/.vim/plugged')
+
+" ---- Colorscheme ----
+Plug 'gruvbox-community/gruvbox'
+
+" ---- Status Line ----
+Plug 'itchyny/lightline.vim'
+
+" ---- File Navigation ----
+Plug 'preservim/nerdtree'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+Plug 'airblade/vim-rooter'          " Auto-set cwd to project root
+
+" ---- Motions & Text Objects ----
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
+Plug 'wellle/targets.vim'
+Plug 'justinmk/vim-sneak'           " s{char}{char} to jump anywhere
+Plug 'unblevable/quick-scope'        " Highlight f/F/t/T targets
+
+" ---- Git ----
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
+
+" ---- LSP + Completion (via coc.nvim) ----
+" Requires Node.js >= 16
+" After :PlugInstall, install language servers with e.g.:
+"   :CocInstall coc-pyright coc-tsserver coc-json coc-rust-analyzer coc-lua
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
+" ---- Syntax / Treesitter-like ----
+Plug 'sheerun/vim-polyglot'
+
+" ---- Auto-pairs ----
+Plug 'windwp/vim-autopairs'
+
+" ---- Comments ----
+Plug 'tpope/vim-commentary'
+
+" ---- Buffers / Tabs ----
+Plug 'ap/vim-buftabline'
+
+call plug#end()
+
+" =============================================================================
+" Colorscheme
+" =============================================================================
+set background=dark
+let g:gruvbox_italic = 1
+colorscheme gruvbox
+
+" =============================================================================
+" Leader Key
+" =============================================================================
+let mapleader = " "
+
+" =============================================================================
+" Navigation Keymaps
+" =============================================================================
+
+" -- Window splits --
+nnoremap <leader>h <C-w>h
+nnoremap <leader>j <C-w>j
+nnoremap <leader>k <C-w>k
+nnoremap <leader>l <C-w>l
+
+" Resize splits with arrows
+nnoremap <C-Up>    :resize +2<CR>
+nnoremap <C-Down>  :resize -2<CR>
+nnoremap <C-Left>  :vertical resize -2<CR>
+nnoremap <C-Right> :vertical resize +2<CR>
+
+" -- Buffers --
+nnoremap <leader>bn :bnext<CR>
+nnoremap <leader>bp :bprevious<CR>
+nnoremap <leader>bd :bdelete<CR>
+nnoremap <leader>bl :buffers<CR>
+
+" -- Move lines up/down --
+vnoremap J :m '>+1<CR>gv=gv
+vnoremap K :m '<-2<CR>gv=gv
+
+" -- Center view after jumps --
+nnoremap n nzzzv
+nnoremap N Nzzzv
+nnoremap <C-d> <C-d>zz
+nnoremap <C-u> <C-u>zz
+
+" -- Clear search highlight --
+nnoremap <leader>/ :nohlsearch<CR>
+
+" -- Better escape --
+inoremap jk <Esc>
+
+" =============================================================================
+" NERDTree
+" =============================================================================
+let g:NERDTreeShowHidden     = 1
+let g:NERDTreeMinimalUI      = 1
+let g:NERDTreeIgnore         = ['^\.git$', '^node_modules$', '^\.DS_Store$']
+
+nnoremap <leader>e :NERDTreeToggle<CR>
+nnoremap <leader>E :NERDTreeFind<CR>
+
+" Close vim if NERDTree is the only window left
+autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 &&
+  \ exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" =============================================================================
+" FZF
+" =============================================================================
+nnoremap <leader>ff :Files<CR>
+nnoremap <leader>fg :Rg<CR>
+nnoremap <leader>fb :Buffers<CR>
+nnoremap <leader>fh :History<CR>
+nnoremap <leader>fc :Commands<CR>
+
+let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.7 } }
+
+" =============================================================================
+" vim-sneak
+" =============================================================================
+let g:sneak#label = 1   " EasyMotion-like labels
+map f <Plug>Sneak_f
+map F <Plug>Sneak_F
+map t <Plug>Sneak_t
+map T <Plug>Sneak_T
+
+" =============================================================================
+" Lightline
+" =============================================================================
+let g:lightline = {
+  \ 'colorscheme': 'gruvbox',
+  \ 'active': {
+  \   'left':  [['mode','paste'],['gitbranch','readonly','filename','modified']],
+  \   'right': [['lineinfo'],['percent'],['fileformat','fileencoding','filetype']]
+  \ },
+  \ 'component_function': {
+  \   'gitbranch': 'FugitiveHead'
+  \ },
+  \ }
+
+" =============================================================================
+" CoC — LSP, Completion, Diagnostics
+" =============================================================================
+
+" Tab / Shift-Tab to navigate completion menu
+inoremap <silent><expr> <Tab>
+  \ coc#pum#visible() ? coc#pum#next(1) :
+  \ CheckBackspace() ? "\<Tab>" :
+  \ coc#refresh()
+inoremap <expr><S-Tab> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+
+" Confirm completion with Enter
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+  \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1] =~# '\s'
+endfunction
+
+" Trigger completion manually
+inoremap <silent><expr> <C-Space> coc#refresh()
+
+" Diagnostics navigation
+nmap <silent> [d <Plug>(coc-diagnostic-prev)
+nmap <silent> ]d <Plug>(coc-diagnostic-next)
+
+" Go to definition / references
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" Hover documentation
+nnoremap <silent> K :call ShowDocumentation()<CR>
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('K', 'in')
+  endif
+endfunction
+
+" Highlight symbol under cursor
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Rename symbol
+nmap <leader>rn <Plug>(coc-rename)
+
+" Code actions
+nmap <leader>ca <Plug>(coc-codeaction-cursor)
+xmap <leader>ca <Plug>(coc-codeaction-selected)
+
+" Format
+nmap <leader>cf <Plug>(coc-format)
+xmap <leader>cf <Plug>(coc-format-selected)
+
+" Quickfix
+nmap <leader>qf <Plug>(coc-fix-current)
+
+" Outline (symbols in file)
+nnoremap <leader>o :CocList outline<CR>
+
+" Workspace symbols
+nnoremap <leader>ws :CocList symbols<CR>
+
+" Show all diagnostics
+nnoremap <leader>cd :CocList diagnostics<CR>
+
+" =============================================================================
+" Git (Fugitive + GitGutter)
+" =============================================================================
+nnoremap <leader>gs :Git<CR>
+nnoremap <leader>gc :Git commit<CR>
+nnoremap <leader>gp :Git push<CR>
+nnoremap <leader>gl :Git log --oneline<CR>
+nnoremap <leader>gb :Git blame<CR>
+nnoremap <leader>gd :Gdiffsplit<CR>
+
+" Navigate hunks
+nmap ]h <Plug>(GitGutterNextHunk)
+nmap [h <Plug>(GitGutterPrevHunk)
+nmap <leader>hp <Plug>(GitGutterPreviewHunk)
+nmap <leader>hs <Plug>(GitGutterStageHunk)
+nmap <leader>hu <Plug>(GitGutterUndoHunk)
+
+" =============================================================================
+" Misc Quality-of-Life
+" =============================================================================
+
+" Auto-create undodir
+if !isdirectory(expand('~/.vim/undodir'))
+  call mkdir(expand('~/.vim/undodir'), 'p')
+endif
+
+" Save with <leader>w
+nnoremap <leader>w :w<CR>
+
+" Quit with <leader>q
+nnoremap <leader>q :q<CR>
+
+" Open terminal in a split
+nnoremap <leader>t :terminal<CR>
+
+" Yank to end of line (consistent with D, C)
+nnoremap Y y$
+
+" Keep visual selection after indent
+vnoremap < <gv
+vnoremap > >gv
+
+" Quick config reload
+nnoremap <leader>sv :source $MYVIMRC<CR>
+nnoremap <leader>ev :edit $MYVIMRC<CR>
