@@ -1,0 +1,11 @@
+[tools]
+chezmoi = "latest"
+fzf = "latest"
+gradle = "latest"
+herdr = "latest"
+hunk = "latest"
+java = "21"
+maven = "latest"
+node = "20"
+python = "3.11"
+terraform = "latest"
